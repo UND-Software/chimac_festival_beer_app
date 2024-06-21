@@ -1,3 +1,5 @@
+import 'package:chimaek_festival/screens/widgets/edit_urp_path.dart';
+import 'package:chimaek_festival/screens/widgets/popup_alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,8 +12,6 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
-    //CommandProvider cp = Provider.of(context)<CommandProvider>();
-
     return Consumer<CommandProvider>(
       builder: (context, cp, _){
         return Scaffold(
@@ -20,7 +20,7 @@ class MainScreen extends StatelessWidget {
             backgroundColor: Colors.orange,
             title: SizedBox(
               width: 200,
-              child: Image.asset('images/magbot+und.png'),
+              child: Image.asset('assets/images/magbot+und.png'),
 
             ),
 
@@ -30,7 +30,7 @@ class MainScreen extends StatelessWidget {
               IconButton(
                 iconSize: 80,
                 onPressed: ()=>{
-                
+                  
               },
               icon: const Icon(Icons.menu))
             ],
@@ -66,7 +66,7 @@ class MainScreen extends StatelessWidget {
                                   height: 100,
                                   child : OutlinedButton(
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.orange, width: 3),
+                                      side: const BorderSide(color: Colors.orange, width: 5),
                                     ),
                                     onPressed: ()=>{
                                       if(!cp.isConnected){
@@ -96,7 +96,7 @@ class MainScreen extends StatelessWidget {
                                   height: 100,
                                   child : OutlinedButton(
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.orange, width: 3),
+                                      side: const BorderSide(color: Colors.orange, width: 5),
                                     ),
                                     onPressed: ()=>{
                                       if(!cp.isConnected){
@@ -126,7 +126,7 @@ class MainScreen extends StatelessWidget {
                                   height: 100,
                                   child : OutlinedButton(
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.orange, width: 3),
+                                      side: const BorderSide(color: Colors.orange, width: 5),
                                     ),
                                     onPressed: ()=>{
                                       if(!cp.isConnected){
@@ -154,6 +154,176 @@ class MainScreen extends StatelessWidget {
                             ],
                           ),
                           const Spacer(),
+                          const Row(
+                            children : [
+                              Padding(padding: EdgeInsets.fromLTRB(30, 10, 0, 0),
+                                child: Text('준비 상태',
+                                  style: TextStyle(
+                                    fontSize: 50,
+                                    fontWeight: FontWeight.w500
+                                  ),
+                                )
+                              ),
+                              Spacer()
+                            ]
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text('1번',
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text('2번',
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text('3번',
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              const SizedBox(width: 10,height:50,),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 100,
+                                  child : OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: cp.isBeerReady[0] ? Colors.green: Colors.red, width: 5),
+                                    ),
+                                    onPressed: ()=>{
+                                      if(!cp.isConnected){
+                                        _showConfirmDialog(context, PopUpData.CHECK_CONNECT)
+                                      }
+                                      else{
+                                        if(cp.isBeerReady[0]){
+                                          _showConfirmDialog(context, PopUpData.CHECK_STOP).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[0] = false;
+                                              }
+                                            }
+                                          )
+                                        }
+                                        else{
+                                          _showConfirmDialog(context, PopUpData.CHECK_READY).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[0] = true;
+                                              }
+                                            }
+                                          )
+                                        }
+                                      }
+                                    },
+                                  child: Text(cp.isBeerReady[0] ? '준비' : '정지',
+                                    style: const TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w800
+                                      ),
+                                    )
+                                  ),
+                                ) 
+                              ),
+                              const SizedBox(width: 20,),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 100,
+                                  child : OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: cp.isBeerReady[1] ? Colors.green: Colors.red, width: 5),
+                                    ),
+                                    onPressed: ()=>{
+                                      if(!cp.isConnected){
+                                        _showConfirmDialog(context, PopUpData.CHECK_CONNECT)
+                                      }
+                                      else{
+                                        if(cp.isBeerReady[1]){
+                                          _showConfirmDialog(context, PopUpData.CHECK_STOP).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[1] = false;
+                                              }
+                                            }
+                                          )
+                                        }
+                                        else{
+                                          _showConfirmDialog(context, PopUpData.CHECK_READY).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[1] = true;
+                                              }
+                                            }
+                                          )
+                                        }
+                                      }
+                                    },
+                                 child: Text(cp.isBeerReady[1] ? '준비' : '정지',
+                                    style: const TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w800
+                                      ),
+                                    )
+                                  ),
+                                ) 
+                              ),
+                              const SizedBox(width: 20,),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 100,
+                                  child : OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: cp.isBeerReady[2] ? Colors.green: Colors.red, width: 5),
+                                    ),
+                                    onPressed: ()=>{
+                                      if(!cp.isConnected){
+                                        _showConfirmDialog(context, PopUpData.CHECK_CONNECT)
+                                      }
+                                      else{
+                                        if(cp.isBeerReady[2]){
+                                          _showConfirmDialog(context, PopUpData.CHECK_STOP).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[2] = false;
+                                              }
+                                            }
+                                          )
+                                        }
+                                        else{
+                                          _showConfirmDialog(context, PopUpData.CHECK_READY).then((ok){
+                                              if(ok!){
+                                                cp.isBeerReady[2] = true;
+                                              }
+                                            }
+                                          )
+                                        }
+                                      }
+                                    },
+                                  child: Text(cp.isBeerReady[2] ? '준비' : '정지',
+                                    style: const TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w800
+                                      ),
+                                    )
+                                  ),
+                                ) 
+                              ),
+                              const SizedBox(width: 10,),
+                            ],
+                          ),
                           Container(
                             color: const Color.fromARGB(255, 227, 227, 227),
                             child: Padding(
@@ -165,10 +335,20 @@ class MainScreen extends StatelessWidget {
                                     width: 180,
                                     child: ElevatedButton(onPressed: ()=>{
                                           if(cp.robotModeData==RobotMode.POWER_OFF){
-                                            cp.handleButtonPress(Command.POWER_ON)
+                                            _showConfirmDialog(context, PopUpData.CHECK_POWER_ON).then((ok){
+                                                if(ok!){
+                                                  cp.handleButtonPress(Command.POWER_ON);
+                                                }
+                                              }
+                                            )
                                           }
                                           else if(cp.robotModeData == RobotMode.POWER_ON || cp.robotModeData == RobotMode.RUNNING || cp.robotModeData == RobotMode.IDLE){
-                                            cp.handleButtonPress(Command.POWER_OFF)
+                                            _showConfirmDialog(context, PopUpData.CHECK_POWER_OFF).then((ok){
+                                                if(ok!){
+                                                  cp.handleButtonPress(Command.POWER_OFF);
+                                                }
+                                              }
+                                            )
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -192,7 +372,6 @@ class MainScreen extends StatelessWidget {
                                     child: GestureDetector(
                                       behavior: HitTestBehavior.deferToChild,
                                       onTapUp: (_)=>{
-                                        
                                         cp.handleButtonPress(Command.PAUSE)
                                       },
                                       child: ElevatedButton(
@@ -225,7 +404,7 @@ class MainScreen extends StatelessWidget {
                                           children: [
                                             Text('send message : ${cp.sendMessage}'),
                                             Text('reply message : ${cp.commandReplyData}'),
-                                            Text('send message : ${cp.logData}'),
+                                            Text('log message : ${cp.logData}'),
                                           ],
                                         ),
                                       )
@@ -374,45 +553,18 @@ class MainScreen extends StatelessWidget {
       context: context,
       barrierDismissible: true, // user must tap button to close the dialog
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(popupData.title),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(popupData.body),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              style : ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange
-                ),
-              child: const Text('확인',
-                style: TextStyle(
-                  color: Colors.white
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(true); // Approve 버튼 클릭 시 true 반환
-              },
-            ),
-            ElevatedButton(
-              style : ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange
-                ),
-              child: const Text('취소',
-                style: TextStyle(
-                  color: Colors.white
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(false); // Cancel 버튼 클릭 시 false 반환
-              },
-            ),
-          ],
-        );
+        return PopUpAlarmDialog(popupData);
       },
+    );
+  }
+
+  Future<bool?> _showEditPathDialog(BuildContext context, CommandProvider cp){
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context){
+        return EditUrpPathDialog(cp);
+      }
     );
   }
 }
@@ -441,6 +593,4 @@ class CircularColorWidget extends StatelessWidget {
       ]
     );
   }
-
-  
 }

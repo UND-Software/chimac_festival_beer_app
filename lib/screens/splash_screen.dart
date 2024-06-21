@@ -22,9 +22,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initialize() async {
     await Provider.of<CommandProvider>(context, listen: false).initCommand();
-    //await Provider.of<CommandProvider>(context, listen: false).connectRobot();
+    await Provider.of<CommandProvider>(context, listen: false).connectRobot();
     
-    await Future.delayed(const Duration(seconds: 3));
+    //await Future.delayed(const Duration(seconds: 3));
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
   }
 
@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Padding(
         padding: const EdgeInsets.fromLTRB(200, 0, 200, 0),
         child: Center(
-          child: Image.asset('images/magbot+und.png')
+          child: Image.asset('assets/images/magbot+und.png')
         ),
       )
     );

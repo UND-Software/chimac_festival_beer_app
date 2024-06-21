@@ -63,7 +63,7 @@ enum RobotMode{
 
   static RobotMode getRobotModeByString(String value){
     for(RobotMode robotMode in RobotMode.values){
-      if (robotMode.value.compareTo(value)==0){
+      if (value.contains(robotMode.value)){
         return robotMode;
       }
     }
@@ -99,7 +99,7 @@ enum SafetyStatus{
 
   static SafetyStatus getSafetyStatusByString(String value){
     for(SafetyStatus safetyStatus in SafetyStatus.values){
-      if (safetyStatus.value.compareTo(value)==0){
+      if (value.contains(safetyStatus.value)){
         return safetyStatus;
       }
     }
@@ -107,13 +107,32 @@ enum SafetyStatus{
   }
 }
 
-enum CurrentTaskState{
+enum CurrentCommandState{
+  NONE(id:0, ko:'대기 중', value: 'POWERING_ON'),
+  POWERING_ON(id:1, ko:'전원 키는 중', value: 'POWERING_ON'),
+  POWERING_OFF(id:2, ko:'전원 끄는 중', value: 'POWERING_OFF'),
+  BRAKE_RELEASING(id:3, ko:'브레이크 해제 중', value: 'BRAKE_RELEASING'),
+  LOADING(id:4, ko:'urp 파일 로딩 중', value: 'LOADING'),
+  GOING_HOME(id:5, ko:'홈 위치 이동 중', value: 'GOING_HOME');
+
+  const CurrentCommandState({
+    required this.id,
+    required this.ko,
+    required this.value
+  });
+
+  final int id;
+  final String ko;
+  final String value;
+}
+
+enum CurrentProgramState{
   ERROR(id:-1, ko:'에러', value : 'ERROR'),
-  STOP(id:0, ko:'대기 중', value : 'STOP'),
+  STOPPED(id:0, ko:'대기 중', value : 'STOPPED'),
   PLAYING(id:1, ko:'동작 중', value : 'PLAYING'),
   PAUSED(id:2, ko:'대기 중', value: 'PAUSED');
 
-  const CurrentTaskState({
+  const CurrentProgramState({
     required this.id,
     required this.ko,
     required this.value
@@ -123,20 +142,28 @@ enum CurrentTaskState{
   final String ko;
   final String value;
 
-  static CurrentTaskState getCurrentTaskStateByString(String value){
-    for(CurrentTaskState currentTaskState in CurrentTaskState.values){
-      if (currentTaskState.value.compareTo(value)==0){
-        return currentTaskState;
+  static CurrentProgramState getCurrentProgramStateByString(String value){
+    for(CurrentProgramState currentPogramState in CurrentProgramState.values){
+      if (value.contains(currentPogramState.value)){
+        return currentPogramState;
       }
     }
-    return CurrentTaskState.ERROR;
+    return CurrentProgramState.ERROR;
+  }
+
+  static List<String> toList() {
+    return CurrentProgramState.values.map((state) => state.value).toList();
   }
 }
 
 enum PopUpData{
+  CHECK_POWER_ON(title : '전원 ON', body : '전원을 켜시겠습니까? 켜는데 몇 초 정도 시간이 소요됩니다.'),
+  CHECK_POWER_OFF(title : '전원 OFF', body : '전원을 끄시겠습니까? 켜는데 몇 초 정도 시간이 소요됩니다.'),
   CHECK_ONE(title : '주문 확인', body : '맥주 1잔 주문 맞나요?'),
   CHECK_TWO(title : '주문 확인', body : '맥주 2잔 주문 맞나요?'),
   CHECK_THREE(title : '주문 확인', body : '맥주 3잔 주문 맞나요?'),
+  CHECK_READY(title : '준비 상태로 변경', body : '해당 맥주 기기를 준비 상태로 변경할까요?'),
+  CHECK_STOP(title : '사용 불가 상태로 변경', body : '해당 맥주 기기를 사용 불가 상태로 변경할까요?'),
   CHECK_CONNECT(title : '연결 확인', body : '로봇과 연결되지 않았습니다. 확인 부탁드립니다.'),
   ALARM_DISCONNECT(title : '연결 끊김', body : '로봇과 연결이 끊겼습니다. 다시 연결해주세요.'),
   CHECK_ERROR(title : '에러 발생', body : '확인 부탁드립니다.');
@@ -150,3 +177,4 @@ enum PopUpData{
   final String body;
     
 }
+
