@@ -25,6 +25,7 @@ class PopUpAlarmDialog extends StatelessWidget{
       ),
       actions: <Widget>[
         ElevatedButton(
+          key : const Key('popup confirm btn'),
           style : ElevatedButton.styleFrom(
               backgroundColor: Colors.orange
             ),
@@ -37,6 +38,7 @@ class PopUpAlarmDialog extends StatelessWidget{
             Navigator.of(context).pop(true); // Approve 버튼 클릭 시 true 반환
           },
         ),
+        if(popupData.cancel)
         ElevatedButton(
           style : ElevatedButton.styleFrom(
               backgroundColor: Colors.orange

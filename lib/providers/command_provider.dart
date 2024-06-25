@@ -16,11 +16,14 @@ class CommandProvider with ChangeNotifier {
   List<bool> isBeerReady = [true, true, true];
   bool isTimeOut = false;
   bool isTimerStart = false;
+  bool isPlayingProgram = false;
+  // 홈 버튼을 길게 눌렀다가 뗏을 때 바뀌는 값
+  bool isPausing = false;
 
-  final String ip = '220.81.122.102';
-  final int port = 54662;
-  // final String ip = '192.168.0.8';
-  // final int port = 29999;
+  //final String ip = '220.81.122.102';
+  //final int port = 54662;
+  final String ip = '192.168.0.29';
+  final int port = 29999;
 
   Socket? _socket;
 
@@ -35,11 +38,16 @@ class CommandProvider with ChangeNotifier {
   String commandString = '';
 
   bool isConnected = false;
+  bool connectionFail = false;
+  bool disconnect = false;
+
   late File settingFile;
 
   // 현재 작업 (0~3: 대기중, 1잔, 2잔, 3잔)
   int currentTaskNum = 0;
-  
+
+  int commandError = 0;
+
   Timer? timer;
 
   
@@ -60,20 +68,37 @@ class CommandProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> saveUrpPath() async {
+
+    FileManager fileManager = FileManager(settingFileName);
+
+    String content = '';
+
+    for(String path in urpFileNames){
+      content += path;
+      content += '\n';
+    }
+
+    fileManager.writeToFile(content);
+  }
+
   Future<bool> connectRobot() async {
+    connectionFail = false;
+    disconnect = false;
+
     try {
-      print('Trying to connect to $ip:$port');
+      print('[LOG]Trying to connect to $ip:$port');
       _socket = await Socket.connect(ip, port).timeout(const Duration(seconds: 5));
-      print('Connection established');
+      print('[LOG]Connection established');
       isConnected = true;
 
       _socket!.listen((data) {
         onServerResponse(String.fromCharCodes(data));
       }, onError: (error) {
-        print('Data error: $error');
-        _disconnectFromServer();
+        print('[LOG]Data error: $error');
       }, onDone: () {
-        print('Connection closed by server');
+        // 연결 끊기면 팝업창
+        print('[LOG]Connection closed by server');
         _disconnectFromServer();
       });
 
@@ -82,20 +107,28 @@ class CommandProvider with ChangeNotifier {
         return true;
       }
     } catch (e) {
-      print('Connection failed: $e');
+      // 연결 실패 시 팝업창
+      print('[LOG]Connection failed: $e');
+      connectionFail = true;
+      notifyListeners();
     }
     return false;
   }
 
   // 1초마다 로봇상태와 안전상태 확인 명령어를 보냄
   void startPeriodicCommand() {
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      await _sendCommand(Command.ROBOT_MODE);
-      await Future.delayed(const Duration(milliseconds: 500));
-      await _sendCommand(Command.SAFETY_STATUS);
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (currentTaskNum != 0){
+    timer = Timer.periodic(const Duration(milliseconds: 1500), (timer) async {
+      if(isConnected) {
+        await _sendCommand(Command.ROBOT_MODE);
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      if(isConnected){
+        await _sendCommand(Command.SAFETY_STATUS);
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      if (currentTaskNum != 0 && isPlayingProgram){
         await _sendCommand(Command.PROGRAM_STATE);
+        await Future.delayed(const Duration(milliseconds: 500));
       }
     });
   }
@@ -109,7 +142,6 @@ class CommandProvider with ChangeNotifier {
 
   // 
   Future<void> _sendCommand(Command command, {String fileName = ''}) async {
-    await Future.delayed(const Duration(seconds: 1));
     commandString = command.command;
 
     if(fileName != ''){
@@ -130,48 +162,50 @@ class CommandProvider with ChangeNotifier {
     // 주기적인 명령어 전송 멈춤
     //timer?.cancel();
 
-    await Future.delayed(const Duration(seconds: 1));
-    
     if(command==Command.POWER_OFF){
       // 버튼 명령어 전송
       await _sendCommand(command);
     }
-    else if(currentCommandState != CurrentCommandState.NONE){
-      return;
-    }
-    else{
-      // 현재 맥주 주문 중일 때는 동작x
-      // 홈위치 이동/ 대기 중 상태일때만 동작
-      if (currentTaskNum != 0 && currentTaskNum != 4){
+    else {
+      if(!currentCommandState.available){
         return;
       }
+      else{
+      // 현재 맥주 주문 중일 때는 동작x
+      // 홈위치 이동/ 대기 중 상태일때만 동작
+        if (currentTaskNum != 0 && currentTaskNum != 4){
+          return;
+        }
 
-      switch (command){
-        case Command.POWER_ON:
-          await _sendPowerOnCommand();
-          break;
-        case Command.ORDER_ONE:
-          // await _sendOrderCommand(0);
-          await _sendTestCommand(0);
-          break;
-        case Command.ORDER_TWO:
-          // await _sendOrderCommand(1);
-          await _sendTestCommand(1);
-          break;
-        case Command.ORDER_THREE:
-          // await _sendOrderCommand(2);
-          await _sendTestCommand(2);
-          break;
-        case Command.GO_HOME:
-          await _sendGoHomeCommand();
-          break;
-        case Command.PAUSE:
-          if(currentTaskNum == 4 && currentCommandState == CurrentCommandState.GOING_HOME){
-            await _sendPauseGoHomeCommand();
-          }
-        default:
+        switch (command){
+          case Command.POWER_ON:
+            await _sendPowerOnCommand();
+            break;
+          case Command.ORDER_ONE:
+            // await _sendOrderCommand(0);
+            await _sendTestCommand(0);
+            break;
+          case Command.ORDER_TWO:
+            // await _sendOrderCommand(1);
+            await _sendTestCommand(1);
+            break;
+          case Command.ORDER_THREE:
+            // await _sendOrderCommand(2);
+            await _sendTestCommand(2);
+            break;
+          case Command.GO_HOME:
+            await _sendGoHomeCommand();
+            break;
+          case Command.PAUSE:
+            if(currentTaskNum == 4 && currentCommandState == CurrentCommandState.GOING_HOME){
+              await _sendPauseGoHomeCommand();
+            }
+          default:
+        }
       }
+      
     }
+    
     notifyListeners();
     // 잠시 대기 후 주기적인 명령어 전송 재개
     await Future.delayed(const Duration(seconds: 1));
@@ -233,53 +267,82 @@ class CommandProvider with ChangeNotifier {
       }
     }
     // 안전상태 확인 명령어 응답
-    else if (commandReplyData.toLowerCase().contains(Command.SAFETY_STATUS.command)){
+    if (commandReplyData.toLowerCase().contains(Command.SAFETY_STATUS.command)){
       safetyStatusData = SafetyStatus.getSafetyStatusByString(commandReplyData);
     }
+
+    // 프로그램 시작 응답
+    if (commandReplyData.contains("Starting program")){
+      isPlayingProgram = true;
+      if(currentTaskNum==4){
+        setCurrentCommandState(CurrentCommandState.GOING_HOME);
+      }
+      else{
+        setCurrentCommandState(CurrentCommandState.PLAYING);
+      }
+    }
+    // Puase 명령어 응답
+    if (commandReplyData.contains("Pausing program")){
+      if(currentCommandState == CurrentCommandState.GOING_HOME){
+        logData = '[log] pause 명령어 성공.';
+        setCurrentCommandState(CurrentCommandState.PAUSING);
+        notifyListeners();
+      }
+    }
+
     // 프로그램 상태 명령어 확인 응답
-    else if (containsSubstring(commandReplyData, CurrentProgramState.toList())){
+    if (containsSubstring(commandReplyData, CurrentProgramState.toList())){
       currentProgramState = CurrentProgramState.getCurrentProgramStateByString(commandReplyData);
 
-      if (currentProgramState==CurrentProgramState.STOPPED){
+      if (currentProgramState==CurrentProgramState.STOPPED && isPlayingProgram){
+        
         currentTaskNum = 0;
+        setCurrentCommandState(CurrentCommandState.NONE);
+        isPlayingProgram = false;
       }
     }
     // LOAD 명령어 응답
-    else if (commandReplyData.toLowerCase().contains(Command.LOAD.command)){
-      if (commandReplyData.toLowerCase().contains(Command.LOAD.success)){
+    if (commandReplyData.toLowerCase().contains(Command.LOAD.command)){
+      if (!commandReplyData.contains(Command.LOAD.success)){
         if (currentTaskNum == 4){
           logData = '[error] 홈 위치 urp 파일 로드 실패';
-          
         }
         else{
           logData = '[error] urp 파일 로드 실패';
         }
-        
         setCurrentCommandState(CurrentCommandState.NONE);
         currentTaskNum = 0;
         notifyListeners();
         return;
       }
-      setCurrentCommandState(CurrentCommandState.LOADING);
-      await _sendCommand(Command.PLAY);
+      else{
+        setCurrentCommandState(CurrentCommandState.LOADING);
+        await _sendCommand(Command.PLAY);
+      }
     }
     // PLAY 명령어 응답
-    else if (commandReplyData.toLowerCase().contains(Command.PLAY.command)){
-      if (commandReplyData.toLowerCase().contains(Command.PLAY.success)){
-        logData = '[error] play 명령어 실패';
+    if (commandReplyData.toLowerCase().contains(Command.PLAY.command)){
+      if (commandReplyData.contains(Command.PLAY.failure)){
+        if(currentTaskNum != 4){
+          logData = '[error] play 명령어 실패 / $commandReplyData';
+          currentProgramState = CurrentProgramState.ERROR;
+        }
+        else{
+          logData = '[error] go home 명령어 실패 / $commandReplyData';
+          currentProgramState = CurrentProgramState.ERROR;
+        }
         setCurrentCommandState(CurrentCommandState.NONE);
         currentTaskNum = 0;
         notifyListeners();
         return;
       }
-      setCurrentCommandState(CurrentCommandState.NONE);
+
       logData = '[log] play 명령어 성공';
-      currentTaskNum = 0;
       notifyListeners();
     }
 
     // POWER ON 명령어 응답
-    else if (commandReplyData.toLowerCase().contains(Command.POWER_ON.command)){
+    if (commandReplyData.toLowerCase().contains(Command.POWER_ON.command)){
       if (commandReplyData.toLowerCase().contains(Command.POWER_ON.success)){
         logData = '[error] power on 명령어 실패';
         return;
@@ -302,6 +365,7 @@ class CommandProvider with ChangeNotifier {
 
     int urpFileNum;
     currentTaskNum = commandNum+1;
+    notifyListeners();
 
     // 1잔 주문
     if(commandNum == 0){
@@ -332,27 +396,22 @@ class CommandProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> _sendGoHomeCommand() async{
+  Future<void> _sendGoHomeCommand() async{
     // 이전 작업이 홈 이동이 아닐 때, urp 로드
     if (currentProgramState == CurrentProgramState.STOPPED && currentTaskNum == 0){
       await _sendCommand(Command.LOAD, fileName: urpFileNames[7]);
-      if (!commandReplyData.toLowerCase().contains(Command.LOAD.success)){
-        
-        return '[error] go home urp 파일 로드 명령 실패';
-      }
+      currentTaskNum = 4;
+      notifyListeners();
     }
-    return commandString;
+    else if(currentCommandState == CurrentCommandState.PAUSING){
+      await _sendCommand(Command.PLAY);
+    }
   }
 
-  Future<String> _sendPauseGoHomeCommand() async{
+  Future<void> _sendPauseGoHomeCommand() async{
     if (currentProgramState == CurrentProgramState.PLAYING){
-      await _sendCommand(Command.PLAY);
-      if (!commandReplyData.toLowerCase().contains(Command.PLAY.success)){
-        return '[error] play 명령 실패.';
-      }
-      return '[log] 홈 이동 일시 정지';
+      await _sendCommand(Command.PAUSE);
     }
-    return '[error] 현재 작동중이 아닙니다.';
   }
 
 
@@ -363,9 +422,15 @@ class CommandProvider with ChangeNotifier {
   }
 
   void _disconnectFromServer() {
+    isConnected = false;
+    disconnect = true;
+    robotModeData = RobotMode.DISCONNECTED;
+
+    timer?.cancel();
+    notifyListeners();
+
     if (_socket != null) {
       _socket!.destroy();
-      isConnected = false;
     }
   }
 
@@ -386,14 +451,9 @@ class CommandProvider with ChangeNotifier {
     }
   }
 
-  Future<void> editUrpPath() async {
-    String content = '';
 
-    for(String path in urpFileNames){
-      content += path;
-      content += '\n';
-    }
-
-    await settingFile.writeAsString(content);
+  void setIsPausing(bool p){
+    isPausing = p;
+    notifyListeners();
   }
 }

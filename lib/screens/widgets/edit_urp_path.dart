@@ -4,14 +4,23 @@ import 'package:flutter/material.dart';
 
 class EditUrpPathDialog extends StatelessWidget{
 
+  List<String> pathName = ['1잔 A', '1잔 B', '1잔 C',
+    '2잔 A', '2잔 B', '2잔 C', '3잔', '홈위치'];
   late CommandProvider cp;
   final int textFieldCount = 8;
   late final List<TextEditingController> _controllers = List.generate(
     textFieldCount,
     (index) => TextEditingController(),
+
   );
 
-  EditUrpPathDialog(this.cp);
+  EditUrpPathDialog(this.cp){
+    int i=0;
+    for(var controller in _controllers.toList()){
+      controller.text = cp.urpFileNames[i++].trim();
+      // controller.text = controller.text.t
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,17 +32,18 @@ class EditUrpPathDialog extends StatelessWidget{
           children: <Widget>[
             for (int i = 0; i < textFieldCount; i++)
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(3),
                 child: Row(
                   children: [
-                    Text('경로 $i:'),
+                    Text(pathName[i]),
+                    const Spacer(),
                     SizedBox(
-                      width: 300,
+                      width: 270,
                       child: TextField(
                         controller: _controllers[i],
-                        decoration: InputDecoration(
-                          labelText: cp.urpFileNames[i],
-                        ),
+                        // decoration: InputDecoration(
+                        //   labelText: cp.urpFileNames[i],
+                        // ),
                       ),
                     ),
                   ],
@@ -56,7 +66,7 @@ class EditUrpPathDialog extends StatelessWidget{
             for(int i=0; i<textFieldCount; i++){
               cp.urpFileNames[i] = _controllers[i].text;
             }
-            cp.editUrpPath();
+            cp.saveUrpPath();
             
             Navigator.of(context).pop(true); // Approve 버튼 클릭 시 true 반환
           },

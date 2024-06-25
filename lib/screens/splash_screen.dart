@@ -24,7 +24,8 @@ class _SplashScreenState extends State<SplashScreen> {
     await Provider.of<CommandProvider>(context, listen: false).initCommand();
     await Provider.of<CommandProvider>(context, listen: false).connectRobot();
     
-    //await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 3));
+    
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
   }
 
