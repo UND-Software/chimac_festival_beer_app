@@ -14,7 +14,8 @@ class CommandProvider with ChangeNotifier {
   final String settingFileName = 'setting.conf';
   List<String> urpFileNames = [];
   List<bool> isBeerReady = [true, true, true];
-  bool isTimeOut = false;
+  bool isPowerOnTimeOut = false;
+  bool isBrakeReleaseTimeOut = false;
   bool isTimerStart = false;
   bool isPlayingProgram = false;
   // 홈 버튼을 길게 눌렀다가 뗏을 때 바뀌는 값
@@ -40,6 +41,7 @@ class CommandProvider with ChangeNotifier {
   bool isConnected = false;
   bool connectionFail = false;
   bool disconnect = false;
+  bool isLocalControlMode = false;
 
   late File settingFile;
 
@@ -79,7 +81,7 @@ class CommandProvider with ChangeNotifier {
       content += '\n';
     }
 
-    fileManager.writeToFile(content);
+    await fileManager.writeToFile(content);
   }
 
   Future<bool> connectRobot() async {
@@ -133,11 +135,18 @@ class CommandProvider with ChangeNotifier {
     });
   }
 
-  Future<void> startTimeOutListener() async{
+  Future<void> startTimeOutListener(int second, Command command) async{
 
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(Duration(seconds: second));
 
-    isTimeOut = true;
+    if(isTimerStart){
+      if(command == Command.POWER_ON && currentCommandState == CurrentCommandState.POWERING_ON){
+        isPowerOnTimeOut = true;
+      }
+      else if(command == Command.BRAKE_RELEASING && command == Command.POWER_ON && currentCommandState == CurrentCommandState.BRAKE_RELEASING){
+        isBrakeReleaseTimeOut = true;
+      }
+    }
   }
 
   // 
@@ -183,15 +192,15 @@ class CommandProvider with ChangeNotifier {
             break;
           case Command.ORDER_ONE:
             // await _sendOrderCommand(0);
-            await _sendTestCommand(0);
+            await _sendOrderCommand(0);
             break;
           case Command.ORDER_TWO:
             // await _sendOrderCommand(1);
-            await _sendTestCommand(1);
+            await _sendOrderCommand(1);
             break;
           case Command.ORDER_THREE:
             // await _sendOrderCommand(2);
-            await _sendTestCommand(2);
+            await _sendOrderCommand(2);
             break;
           case Command.GO_HOME:
             await _sendGoHomeCommand();
@@ -214,15 +223,21 @@ class CommandProvider with ChangeNotifier {
   Future<void> onServerResponse(String response) async {
     commandReplyData = response.replaceFirst('\n', ' ');
 
+    // 원격 제어 모드가 아닐 경우 응답
+    if (commandReplyData.contains('Command is not allowed')){
+      isLocalControlMode = true;
+      notifyListeners();
+    }
+
     // 로봇모드 확인 명령어 응답
     if (commandReplyData.toLowerCase().contains(Command.ROBOT_MODE.command)){
       robotModeData = RobotMode.getRobotModeByString(commandReplyData);
 
       if(currentCommandState == CurrentCommandState.POWERING_ON){
-        // if(!isTimerStart) {
-        //   isTimerStart = true;
-        //   startTimeOutListener();
-        // }
+        if(!isTimerStart) {
+          isTimerStart = true;
+          startTimeOutListener(15, Command.POWER_ON);
+        }
           
         if (commandReplyData.contains(RobotMode.IDLE.value)){
           await _sendCommand(Command.BRAKE_RELEASING);
@@ -230,13 +245,15 @@ class CommandProvider with ChangeNotifier {
         }
 
         // 시간 초과
-        // else if(isTimeOut){
-        //   logData = '[error] powering on 시간초과. 다시 시도해주세요.';
-        //   setCurrentCommandState(CurrentCommandState.NONE);
-        //   startPeriodicCommand();
-        //   isTimeOut = false;
-        //   isTimerStart = false;
-        // }
+        else if(isPowerOnTimeOut){
+          logData = '[error] powering on 시간초과. 다시 시도해주세요.';
+
+          notifyListeners();
+
+          setCurrentCommandState(CurrentCommandState.NONE);
+          isPowerOnTimeOut = false;
+          isTimerStart = false;
+        }
         // else{
         //   await _sendCommand(Command.ROBOT_MODE);
         // }
@@ -244,13 +261,25 @@ class CommandProvider with ChangeNotifier {
       }
       
       else if(currentCommandState == CurrentCommandState.BRAKE_RELEASING){
+        if(!isTimerStart) {
+          isTimerStart = true;
+          startTimeOutListener(15, Command.BRAKE_RELEASING);
+        }
+
         if (commandReplyData.contains(RobotMode.RUNNING.value)){
           logData = '[log] power on 명령 완료.';
           setCurrentCommandState(CurrentCommandState.NONE);
-          notifyListeners();
-          startPeriodicCommand();
-        }
 
+        }
+        else if(isBrakeReleaseTimeOut){
+          logData = '[error] brake release 시간초과. 다시 시도해주세요.';
+          setCurrentCommandState(CurrentCommandState.NONE);
+
+          notifyListeners();
+
+          isBrakeReleaseTimeOut = false;
+          isTimerStart = false;
+        }
         // 시간 초과
         // else if(isTimeOut){
         //   logData = '[error] powering on 시간초과. 다시 시도해주세요.';
@@ -260,9 +289,6 @@ class CommandProvider with ChangeNotifier {
         //   isTimerStart = false;
         // }
         
-        else{
-          await _sendCommand(Command.ROBOT_MODE);
-        }
         notifyListeners();
       }
     }
