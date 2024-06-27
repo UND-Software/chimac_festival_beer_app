@@ -5,6 +5,16 @@
 
 import 'package:flutter/material.dart';
 
+const List<String> initUrpPath = [
+  'test_john.urp',
+  'test/test_john.urp',
+  'test/test_john.urp',
+  'test/test_john.urp',
+  'test/test_john.urp',
+  'test/test_john.urp',
+  'test/test_john.urp',
+  'test_john.urp',
+];
 
 enum Command{
   POWER_ON(id:0, command: 'power on', success:"Powering on", failure:""),
@@ -172,10 +182,17 @@ enum PopUpData{
   CHECK_READY(title : '준비 상태로 변경', body : '해당 맥주 기기를 준비 상태로 변경할까요?', cancel : true),
   CHECK_STOP(title : '사용 불가 상태로 변경', body : '해당 맥주 기기를 사용 불가 상태로 변경할까요?', cancel : true),
   CHECK_GO_HOME(title : '홈 위치 이동 완료', body : '홈 위치 이동 완료했습니다.', cancel : false),
-  CHECK_CONNECTION(title : '연결 확인', body : '로봇과 연결되지 않았습니다. 확인 부탁드립니다.', cancel : false),
+  CHECK_ERROR_CONNECTION(title : '연결 확인', body : '로봇과 연결되지 않았습니다. 확인 부탁드립니다.', cancel : false),
   ALARM_DISCONNECT(title : '연결 끊김', body : '로봇과 연결이 끊어졌습니다. 다시 연결해주세요.', cancel : false),
   ALARM_FAIL_CONNECT(title : '연결 실패', body : '로봇 연결을 실패했습니다. 확인하고 다시 시도해주세요.', cancel : false),
-  CHECK_ERROR(title : '에러 발생', body : '확인 부탁드립니다.', cancel : false);
+  CHECK_ERROR(title : '에러 발생', body : '확인 부탁드립니다.', cancel : false),
+  CHECK_ERROR_POWER_ON(title : '전원ON 시간초과', body : 'powering on 명령 시간초과. 로봇을 원격제어 상태로 변경 후 다시 시도해주세요.', cancel : false),
+  CHECK_ERROR_BRAKE_RELEASE(title : '전원ON 시간초과', body : 'brake release 명령 시간초과. 다시 시도해주세요.', cancel : false),
+  CHECK_ERROR_LOCAL_CONTROL_MODE(title : '로봇 제어 모드 오류', body : '로봇을 원격 제어 모드로 변경한 후 앱을 재시작 해주세요.', cancel : false),
+  CHECK_EXIT_APP(title : '앱 종료 확인', body : '앱을 종료하시겠습니까?', cancel : true),
+  CHECK_EXIT_ROBOT_WORKING(title : '동작 중', body : '로봇 동작 중에는 앱 종료가 불가능합니다.', cancel : false),
+  CHECK_SAFETY_ERROR(title : '안전 모드 에러', body : '안전 모드 에러 발생. 확인해 주세요.', cancel : false);
+
 
   const PopUpData({
     required this.title,

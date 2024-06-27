@@ -29,7 +29,7 @@ class CommandProvider with ChangeNotifier {
   Socket? _socket;
 
   RobotMode robotModeData = RobotMode.DISCONNECTED;
-  SafetyStatus safetyStatusData = SafetyStatus.ERROR;
+  SafetyStatus safetyStatusData = SafetyStatus.NORMAL;
   CurrentProgramState currentProgramState = CurrentProgramState.STOPPED;
   CurrentCommandState currentCommandState = CurrentCommandState.NONE;
 
@@ -42,6 +42,7 @@ class CommandProvider with ChangeNotifier {
   bool connectionFail = false;
   bool disconnect = false;
   bool isLocalControlMode = false;
+  bool isSafetyError = false;
 
   late File settingFile;
 
@@ -52,7 +53,6 @@ class CommandProvider with ChangeNotifier {
 
   Timer? timer;
 
-  
   // setting.conf 파일에 있는 로봇 urp 파일 경로들을 불러옴.
   // 위에서 부터 차례대로
   // 1잔-1번/2번/3번
@@ -61,13 +61,25 @@ class CommandProvider with ChangeNotifier {
   // 홈위치 
   // 각각의 경우의 수에 대한 urp 파일(8개)를 읽는다.
   Future<void> initCommand() async{
+
     try {
-      final String config = await rootBundle.loadString('setting.conf');
+      FileManager fileManager = FileManager(settingFileName);
+
+      final String config = await fileManager.readFile();
+
+      if(config.isEmpty){
+        urpFileNames.addAll(urpFileNames);
+      }
       urpFileNames = config.split('\n');
     } catch (e) {
       throw Exception("Error loading setting.conf: $e");
     }
     notifyListeners();
+  }
+
+  void initStateByError(){
+    setCurrentCommandState(CurrentCommandState.NONE);
+    currentTaskNum = 0;
   }
 
   Future<void> saveUrpPath() async {
@@ -81,7 +93,7 @@ class CommandProvider with ChangeNotifier {
       content += '\n';
     }
 
-    await fileManager.writeToFile(content);
+    fileManager.modifyFile(content);
   }
 
   Future<bool> connectRobot() async {
@@ -176,6 +188,7 @@ class CommandProvider with ChangeNotifier {
       await _sendCommand(command);
     }
     else {
+      // 버튼 제어 가능 상태인지 확인
       if(!currentCommandState.available){
         return;
       }
@@ -295,6 +308,10 @@ class CommandProvider with ChangeNotifier {
     // 안전상태 확인 명령어 응답
     if (commandReplyData.toLowerCase().contains(Command.SAFETY_STATUS.command)){
       safetyStatusData = SafetyStatus.getSafetyStatusByString(commandReplyData);
+
+      if(safetyStatusData != SafetyStatus.NORMAL){
+
+      }
     }
 
     // 프로그램 시작 응답

@@ -1,6 +1,7 @@
 import 'package:chimaek_festival/screens/widgets/edit_urp_path.dart';
 import 'package:chimaek_festival/screens/widgets/popup_alarm.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/command_provider.dart';
@@ -19,6 +20,7 @@ class MainScreen extends StatelessWidget {
     return Consumer<CommandProvider>(
       builder: (context, cp, child){
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          // 연결 끊김 팝업
           if(!cp.isConnected){
             if(cp.disconnect){
               _showConfirmDialog(context, PopUpData.ALARM_DISCONNECT);
@@ -27,11 +29,31 @@ class MainScreen extends StatelessWidget {
               _showConfirmDialog(context, PopUpData.ALARM_FAIL_CONNECT);
             }
           }
+          // 홈 이동 완료 팝업
           if(cp.isPausing){
             if(cp.currentProgramState==CurrentProgramState.STOPPED){
               _showConfirmDialog(context, PopUpData.CHECK_GO_HOME);
               cp.isPausing = false;
             }
+          }
+          // 명령 시간초과 팝업
+          if(cp.isPowerOnTimeOut){
+              _showConfirmDialog(context, PopUpData.CHECK_ERROR_POWER_ON);
+            }
+          else if(cp.isBrakeReleaseTimeOut){
+            _showConfirmDialog(context, PopUpData.CHECK_ERROR_BRAKE_RELEASE);
+          }             
+          // 로컬 제어 경고 팝업
+          if(cp.isLocalControlMode){
+            cp.isLocalControlMode = false;
+            _showConfirmDialog(context, PopUpData.CHECK_ERROR_LOCAL_CONTROL_MODE);
+          }
+          // 안전모드 에러 경고 팝업
+          if(cp.isSafetyError){
+            cp.isSafetyError = false;
+            _showConfirmDialog(context, PopUpData.CHECK_SAFETY_ERROR).then((ok)=>{
+              cp.initStateByError()
+            });
           }
         });
         return Scaffold(
@@ -61,17 +83,51 @@ class MainScreen extends StatelessWidget {
                 child: CircularColorWidget(color : cp.isConnected ? Colors.green : Colors.red, diameter: 50, connectState: '',),
               ),
               const SizedBox(width: 10,),
-              IconButton(
-                iconSize: 80,
-                onPressed: ()=>{
-                  _showEditPathDialog(context, cp)
-              },
-              icon: const Icon(Icons.menu))
+              PopupMenuButton<String>(
+                icon: const Icon(
+                    Icons.menu,
+                    size: 50,
+                  ),
+                onSelected: (String result) {
+                  // 선택된 항목에 따라 동작을 정의합니다.
+                  switch (result) {
+                    case 'URP 경로 수정':
+                      // 옵션 1을 선택했을 때의 동작
+                      if(cp.isConnected){
+                        _showEditPathDialog(context, cp);
+                      }
+                      else{
+                        _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION);
+                      }
+                      break;
+                    case '앱 종료':
+                      // 옵션 2를 선택했을 때의 동작
+                      if(cp.currentProgramState==CurrentProgramState.PLAYING){
+                        _showConfirmDialog(context, PopUpData.CHECK_EXIT_ROBOT_WORKING);
+                      }
+                      else{
+                        _showConfirmDialog(context, PopUpData.CHECK_EXIT_APP).then((ok)=>{
+                          SystemNavigator.pop()
+                        });
+                      }
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'URP 경로 수정',
+                    child: Text('URP 경로 수정'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: '앱 종료',
+                    child: Text('앱 종료'),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 20,)
             ],
           ),
-          body: SafeArea(
-            child: Stack(
-              children: [
+          body: 
                 Row(
                   children: [
                     Expanded(
@@ -107,7 +163,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           onPressed: ()=>{
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               if(cp.currentTaskNum != 0){
@@ -144,7 +200,7 @@ class MainScreen extends StatelessWidget {
                                           onPressed: ()=>{
                                             //TODO
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               if(cp.currentTaskNum != 0){
@@ -179,7 +235,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           onPressed: ()=>{
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               if(cp.currentTaskNum != 0){
@@ -265,7 +321,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           onPressed: ()=>{
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               print('currentTaskNum : ${cp.currentTaskNum}'),
@@ -312,7 +368,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           onPressed: ()=>{
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               print('currentTaskNum : ${cp.currentTaskNum}'),
@@ -359,7 +415,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           onPressed: ()=>{
                                             if(!cp.isConnected){
-                                              _showConfirmDialog(context, PopUpData.CHECK_CONNECTION)
+                                              _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION)
                                             }
                                             else{
                                               if(cp.currentTaskNum != 0){
@@ -621,19 +677,6 @@ class MainScreen extends StatelessWidget {
                     )
                   ],
                 ),
-                if (keyboardHeight > 0)
-                Positioned(
-                  bottom: keyboardHeight,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: keyboardHeight,
-                    color: Colors.transparent,
-                  ),
-                ),
-              ]
-            ),
-          )
         );
       },
     );
@@ -676,7 +719,7 @@ class MainScreen extends StatelessWidget {
     PopUpData pd;
 
     if(!cp.isConnected){
-      _showConfirmDialog(context, PopUpData.CHECK_CONNECTION);
+      _showConfirmDialog(context, PopUpData.CHECK_ERROR_CONNECTION);
     }
     else{
       if(cp.currentTaskNum != 0){

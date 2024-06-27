@@ -1,5 +1,5 @@
 name: chimaek_festival
-description: "A new Flutter project."
+description: "대구 치맥 페스티벌(2024) 맥주 로봇(UR) 원격 제어 앱"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -35,11 +35,17 @@ dependencies:
   flutter_driver:
     sdk: flutter
   test: any
-  path_provider: ^2.0.9
+  flutter_launcher_icons: ^0.13.1
+  path_provider: ^2.1.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/magbot+und.png"
 
 dev_dependencies:
   flutter_test:
@@ -94,12 +100,3 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
 
-
-
-flutter_native_splash:
-  color: "#42a5f5"
-  image: assets/splash.png
-  android: true
-  ios: true
-
-  
