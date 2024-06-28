@@ -181,6 +181,7 @@ enum PopUpData{
   CHECK_WORKING(title : '경고', body : '현재 주문 작업 중입니다.', cancel : false),
   CHECK_READY(title : '준비 상태로 변경', body : '해당 맥주 기기를 준비 상태로 변경할까요?', cancel : true),
   CHECK_STOP(title : '사용 불가 상태로 변경', body : '해당 맥주 기기를 사용 불가 상태로 변경할까요?', cancel : true),
+  CHECK_BEER_AVAILABLE(title : '맥주 기기 부족', body : '주문 수 보다 준비된 맥주 기기의 수가 부족합니다.', cancel : false),
   CHECK_GO_HOME(title : '홈 위치 이동 완료', body : '홈 위치 이동 완료했습니다.', cancel : false),
   CHECK_ERROR_CONNECTION(title : '연결 확인', body : '로봇과 연결되지 않았습니다. 확인 부탁드립니다.', cancel : false),
   ALARM_DISCONNECT(title : '연결 끊김', body : '로봇과 연결이 끊어졌습니다. 다시 연결해주세요.', cancel : false),

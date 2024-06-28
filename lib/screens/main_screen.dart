@@ -12,8 +12,6 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -54,6 +52,11 @@ class MainScreen extends StatelessWidget {
             _showConfirmDialog(context, PopUpData.CHECK_SAFETY_ERROR).then((ok)=>{
               cp.initStateByError()
             });
+          }
+          // 준비된 맥주 기기 수가 주문 수 보다 모자랄 경우 팝업
+          if(!cp.isOrderAvailable){
+            cp.isOrderAvailable = true;
+            _showConfirmDialog(context, PopUpData.CHECK_BEER_AVAILABLE);
           }
         });
         return Scaffold(

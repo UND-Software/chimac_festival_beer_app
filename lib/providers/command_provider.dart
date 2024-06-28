@@ -23,7 +23,7 @@ class CommandProvider with ChangeNotifier {
 
   //final String ip = '220.81.122.102';
   //final int port = 54662;
-  final String ip = '192.168.0.29';
+  final String ip = '192.168.0.8';
   final int port = 29999;
 
   Socket? _socket;
@@ -43,6 +43,7 @@ class CommandProvider with ChangeNotifier {
   bool disconnect = false;
   bool isLocalControlMode = false;
   bool isSafetyError = false;
+  bool isOrderAvailable = true;
 
   late File settingFile;
 
@@ -67,10 +68,12 @@ class CommandProvider with ChangeNotifier {
 
       final String config = await fileManager.readFile();
 
-      if(config.isEmpty){
-        urpFileNames.addAll(urpFileNames);
+      if(config.length < 2){
+        urpFileNames.addAll(initUrpPath);
       }
-      urpFileNames = config.split('\n');
+      else{
+        urpFileNames = config.split('\n');
+      }
     } catch (e) {
       throw Exception("Error loading setting.conf: $e");
     }
@@ -407,13 +410,19 @@ class CommandProvider with ChangeNotifier {
   Future<void> _sendOrderCommand(int commandNum) async{
 
     int urpFileNum;
-    currentTaskNum = commandNum+1;
     notifyListeners();
 
     // 1잔 주문
     if(commandNum == 0){
       urpFileNum = 0;
+      if(isBeerReady.where((element) => element == true).isEmpty){
+        logData = '[error] 주문 수 보다 작업 가능한 맥주 기기의 수가 부족합니다.';
+        isOrderAvailable = false;
+        notifyListeners();
+        return;
+      }
       urpFileNum += isBeerReady.indexWhere((element)=> element == true);
+      
       currentTaskNum = 1;
     }
     // 2잔 주문
@@ -421,6 +430,9 @@ class CommandProvider with ChangeNotifier {
       urpFileNum = 3;
       if(isBeerReady.where((element) => element == true).length < 2){
         logData = '[error] 주문 수 보다 작업 가능한 맥주 기기의 수가 부족합니다.';
+        isOrderAvailable = false;
+        notifyListeners();
+        return;
       }
 
       urpFileNum += (2-isBeerReady.indexWhere((element)=> element == false));
@@ -429,6 +441,9 @@ class CommandProvider with ChangeNotifier {
     else{
       if(isBeerReady.where((element) => element == true).length < 3){
         logData = '[error] 주문 수 보다 작업 가능한 맥주 기기의 수가 부족합니다.';
+        isOrderAvailable = false;
+        notifyListeners();
+        return;
       }
       urpFileNum = 6;
       currentTaskNum = 3;
