@@ -31,7 +31,7 @@ class FileManager {
       content = await file.readAsString();
       
     } catch (e) {
-        content = '읽기 오류: $e';
+        return '';
     }
     return content;
   }
