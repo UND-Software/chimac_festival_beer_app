@@ -14,7 +14,7 @@ class EditUrpPathDialog extends StatelessWidget{
 
   );
 
-  EditUrpPathDialog(this.cp){
+  EditUrpPathDialog(this.cp, {super.key}){
     int i=0;
     for(var controller in _controllers.toList()){
       controller.text = cp.urpFileNames[i++].trim();
