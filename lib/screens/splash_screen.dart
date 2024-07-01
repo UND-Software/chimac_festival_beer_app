@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'main_screen.dart'; // 예시로 만들어진 메인 화면
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -26,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
     
     await Future.delayed(const Duration(seconds: 3));
     
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
   }
 
   @override

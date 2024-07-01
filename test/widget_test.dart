@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:chimaek_festival/screens/splash_screen.dart';
-import 'package:chimaek_festival/screens/widgets/popup_alarm.dart';
 import 'package:chimaek_festival/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +13,7 @@ void main() {
     await orderTester.pumpWidget(
       ChangeNotifierProvider(
         create: (context) => CommandProvider(),
-        child: MaterialApp(
+        child: const MaterialApp(
           home: SplashScreen(),
         ),
       ),
@@ -107,7 +106,7 @@ void main() {
       await orderTester.tap(confirmBtnFinder);
       await orderTester.pumpAndSettle();
 
-      await waitForTaskState(orderTester, 1, Duration(seconds: 10));
+      await waitForTaskState(orderTester, 1, const Duration(seconds: 10));
 
       if (cp.logData.toLowerCase().contains('fail')) {
         print('$i : [error] ${cp.logData}');
