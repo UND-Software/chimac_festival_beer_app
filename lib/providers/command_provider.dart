@@ -23,7 +23,7 @@ class CommandProvider with ChangeNotifier {
 
   //final String ip = '220.81.122.102';
   //final int port = 54662;
-  final String ip = '192.168.0.8';
+  final String ip = '192.168.0.29';
   final int port = 29999;
 
   Socket? _socket;
@@ -434,8 +434,9 @@ class CommandProvider with ChangeNotifier {
         notifyListeners();
         return;
       }
-
-      urpFileNum += (2-isBeerReady.indexWhere((element)=> element == false));
+      if(isBeerReady.indexWhere((element)=> element == false) != -1) {
+        urpFileNum += isBeerReady.indexWhere((element)=> element == false);
+      }
       currentTaskNum = 2;
     }
     else{
